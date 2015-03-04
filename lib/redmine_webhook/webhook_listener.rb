@@ -42,16 +42,17 @@ class RedmineWebhook::WebhookListener < Redmine::Hook::Listener
   end
 
   def post(webhook, request_body)
-    Thread.start do
-      begin
-        Faraday.post do |req|
-          req.url webhook.url
-          req.headers['Content-Type'] = 'application/json'
-          req.body = request_body
-        end
-      rescue => e
-        Rails.logger.error e
+    Thread.new do
+      connection = Faraday.new() do |faraday|
+        faraday.response :logger
+      end
+
+      connection.post do |req|
+        req.url webhook.url
+        req.headers['Content-Type'] = 'application/json'
+        req.body = request_body
       end
     end
   end
+
 end
